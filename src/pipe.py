@@ -12,12 +12,12 @@ class Board:
     def adjacent_vertical_values(self, row: int, col: int):
         """ Devolve os valores imediatamente acima e abaixo,
         respectivamente. """
-        if row - 1 <= 0:
+        if row - 1 < 0:
             up = None
         else:
             up = self.matrix[row - 1][col]
         
-        if row + 1 >= self.matrix.size() - 1:
+        if row + 1 >= self.matrix.__len__():
             down = None
         else:
             down = self.matrix[row + 1][col]
@@ -27,12 +27,12 @@ class Board:
     def adjacent_horizontal_values(self, row: int, col: int):
         """ Devolve os valores imediatamente à esquerda e à direita,
         respectivamente. """
-        if col - 1 <= 0:
+        if col - 1 < 0:
             left = None
         else:
             left = self.matrix[row][col - 1]
         
-        if col + 1 >= self.matrix.size() - 1:
+        if col + 1 >= self.matrix.__len__():
             right = None
         else:
             right = self.matrix[row][col + 1]
@@ -40,6 +40,9 @@ class Board:
         return (left, right)
 
     # TODO: outros metodos da classe
+
+    def print_board(self):
+        print(self.matrix)
 
     @staticmethod
     def parse_instance(board):
@@ -50,8 +53,12 @@ class Board:
         > from sys import stdin
         > line = stdin.readline().split()
         """
-        while stdin.isatty():
-        line = stdin.readline().split('\t')
+
+        line = stdin.readline().split()
+        size = line.__len__()
         board.add_line(line)
 
+        for i in range(size-1):
+            line = stdin.readline().split()
+            board.add_line(line)
         return
