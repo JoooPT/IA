@@ -159,8 +159,7 @@ class PipeMania(Problem):
         for row in range(size):
             for col in range(size):
                 curr_piece = state.board.get_value(row, col)
-                options = [p for p in pieces if curr_piece[0] == p[0] and curr_piece[1] != p[1]]
-                for piece in options:
+                for piece in actions.get(curr_piece):
                     res.append((row, col, piece))
         return res
 
