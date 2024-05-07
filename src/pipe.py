@@ -22,17 +22,17 @@ pieces = ["FC", "FB", "FE", "FD", "BC", "BB", "BE", "BD", "VC", "VB", "VE", "VD"
 
 connections = {      # (up, right, down, left)
     "FC" : (True,False,False,False),
-    "FB" : (False,True,False,False),
-    "FE" : (False,False,True,False),
-    "FD" : (False,False,False,True),
+    "FD" : (False,True,False,False),
+    "FB" : (False,False,True,False),
+    "FE" : (False,False,False,True),
     "BC" : (True,True,False,True),
+    "BD" : (True,True,True,False),
     "BB" : (False,True,True,True),
     "BE" : (True,False,True,True),
-    "BD" : (True,True,True,False),
     "VC" : (True,False,False,True),
+    "VD" : (True,True,False,False),
     "VB" : (False,True,True,False),
     "VE" : (False,False,True,True),
-    "VD" : (True,True,False,False),
     "LH" : (False,True,False,True),
     "LV" : (True,False,True,False)
 }
