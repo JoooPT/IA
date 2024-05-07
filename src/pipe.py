@@ -37,6 +37,26 @@ connections = {      # (up, right, down, left)
     "LV" : (1,0,1,0)
 }
 
+actions = {
+    "FC": ("FB", "FE", "FD"),
+    "FB": ("FC", "FE", "FD"),
+    "FE": ("FC", "FB", "FD"),
+    "FD": ("FB", "FE", "FC"),
+    
+    "BC": ("BB", "BE", "BD"),
+    "BB": ("BC", "BE", "BD"),
+    "BE": ("BC", "BB", "BD"),
+    "BD": ("BB", "BE", "BC"),
+
+    "VC": ("VB", "VE", "VD"),
+    "VB": ("VC", "VE", "VD"),
+    "VE": ("VC", "VB", "VD"),
+    "VD": ("VB", "VE", "VC"),
+
+    "LH": ("LV"),
+    "LV": ("LH")
+}
+
 class PipeManiaState:
     state_id = 0
 
