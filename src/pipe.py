@@ -21,20 +21,20 @@ from search import (
 pieces = ["FC", "FB", "FE", "FD", "BC", "BB", "BE", "BD", "VC", "VB", "VE", "VD", "LH", "LV"]
 
 connections = {      # (up, right, down, left)
-    "FC" : (1,0,0,0),
-    "FB" : (0,1,0,0),
-    "FE" : (0,0,1,0),
-    "FD" : (0,0,0,1),
-    "BC" : (1,1,0,1),
-    "BB" : (0,1,1,1),
-    "BE" : (1,0,1,1),
-    "BD" : (1,1,1,0),
-    "VC" : (1,0,0,1),
-    "VB" : (0,1,1,0),
-    "VE" : (0,0,1,1),
-    "VD" : (1,1,0,0),
-    "LH" : (0,1,0,1),
-    "LV" : (1,0,1,0)
+    "FC" : (True,False,False,False),
+    "FB" : (False,True,False,False),
+    "FE" : (False,False,True,False),
+    "FD" : (False,False,False,True),
+    "BC" : (True,True,False,True),
+    "BB" : (False,True,True,True),
+    "BE" : (True,False,True,True),
+    "BD" : (True,True,True,False),
+    "VC" : (True,False,False,True),
+    "VB" : (False,True,True,False),
+    "VE" : (False,False,True,True),
+    "VD" : (True,True,False,False),
+    "LH" : (False,True,False,True),
+    "LV" : (True,False,True,False)
 }
 
 actions = {
@@ -125,6 +125,22 @@ class Board:
     def print(self):
         print(self.matrix)
 
+    def number_piece_connections(self, row:int, col:int):
+        piece = self.matrix[row][col]
+        number_connections = 0
+        vertical = self.adjacent_vertical_values(row,col)
+        horizontal = self.adjacent_horizontal_values(row,col)
+        pieceCon = connections.get(piece)
+        if vertical[0] and pieceCon[0] and connections.get(vertical[0])[2]:
+            number_connections += 1
+        if vertical[1] and pieceCon[2] and connections.get(vertical[1])[0]:
+            number_connections += 1 
+        if horizontal[0] and pieceCon[3] and connections.get(horizontal[0])[1]:
+            number_connections += 1 
+        if horizontal[1] and pieceCon[1] and connections.get(horizontal[1])[3]:
+            number_connections += 1
+        return number_connections
+     
     @staticmethod
     def parse_instance():
         """Lê a instância do problema do standard input (stdin)
@@ -194,10 +210,7 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     board.print()
     problem = PipeMania(board)
-    print(problem.actions(problem.state))
-    action = (1, 2, "LH")
-    problem.result(problem.state, action)
-    problem.state.board.print()
+    print(board.number_piece_connections(1,0))
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
