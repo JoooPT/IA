@@ -18,6 +18,8 @@ from search import (
 )
 
 
+pieces = ["FC", "FB", "FE", "FD", "BC", "BB", "BE", "BD", "VC", "VB", "VE", "VD", "LH", "LV"]
+
 class PipeManiaState:
     state_id = 0
 
@@ -35,12 +37,18 @@ class PipeManiaState:
 class Board:
     """Representação interna de um tabuleiro de PipeMania."""
 
+    def __init__(self):
+        self.matrix = []
+
     def get_value(self, row: int, col: int):
         """Devolve o valor na respetiva posição do tabuleiro."""
         return self.matrix[row][col]
 
-    def __init__(self):
-        self.matrix = []
+    def set_value(self, row, col, piece):
+        self.matrix[row][col] = piece
+    
+    def __len__(self):
+        return self.matrix.__len__()
 
     def add_line(self, line):
         self.matrix.append(line)
@@ -103,22 +111,31 @@ class Board:
 class PipeMania(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        # TODO
-        pass
+        self.state = PipeManiaState(board)
+
 
     def actions(self, state: PipeManiaState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
-        pass
+        res = []
+        size = state.board.__len__()
+        for row in range(size):
+            for col in range(size):
+                curr_piece = state.board.get_value(row, col)
+                options = [p for p in pieces if curr_piece[0] == p[0] and curr_piece[1] != p[1]]
+                for piece in options:
+                    res.append((row, col, piece))
+        return res
+
+        
 
     def result(self, state: PipeManiaState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        # TODO
-        pass
+        state.board.set_value(action[0], action[1], action[2])
+        return state
 
     def goal_test(self, state: PipeManiaState):
         """Retorna True se e só se o estado passado como argumento é
@@ -140,6 +157,11 @@ if __name__ == "__main__":
     # Ler o ficheiro do standard input
     board = Board.parse_instance()
     board.print()
+    problem = PipeMania(board)
+    print(problem.actions(problem.state))
+    action = (1, 2, "LH")
+    problem.result(problem.state, action)
+    problem.state.board.print()
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
