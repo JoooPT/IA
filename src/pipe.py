@@ -3,8 +3,8 @@
 # Além das funções e classes sugeridas, podem acrescentar outras que considerem pertinentes.
 
 # Grupo 00:
-# 00000 Nome1
-# 00000 Nome2
+# 107061 David Antunes
+# 107251 João Ribeiro
 
 import sys 
 from search import (
@@ -19,6 +19,23 @@ from search import (
 
 
 pieces = ["FC", "FB", "FE", "FD", "BC", "BB", "BE", "BD", "VC", "VB", "VE", "VD", "LH", "LV"]
+
+connections = {      # (up, right, down, left)
+    "FC" : (1,0,0,0),
+    "FB" : (0,1,0,0),
+    "FE" : (0,0,1,0),
+    "FD" : (0,0,0,1),
+    "BC" : (1,1,0,1),
+    "BB" : (0,1,1,1),
+    "BE" : (1,0,1,1),
+    "BD" : (1,1,1,0),
+    "VC" : (1,0,0,1),
+    "VB" : (0,1,1,0),
+    "VE" : (0,0,1,1),
+    "VD" : (1,1,0,0),
+    "LH" : (0,1,0,1),
+    "LV" : (1,0,1,0)
+}
 
 class PipeManiaState:
     state_id = 0
