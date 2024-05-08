@@ -21,20 +21,20 @@ from search import (
 pieces = ["FC", "FB", "FE", "FD", "BC", "BB", "BE", "BD", "VC", "VB", "VE", "VD", "LH", "LV"]
 
 connections = {      # (up, right, down, left)
-    "FC" : (True,False,False,False),
-    "FD" : (False,True,False,False),
-    "FB" : (False,False,True,False),
-    "FE" : (False,False,False,True),
-    "BC" : (True,True,False,True),
-    "BD" : (True,True,True,False),
-    "BB" : (False,True,True,True),
-    "BE" : (True,False,True,True),
-    "VC" : (True,False,False,True),
-    "VD" : (True,True,False,False),
-    "VB" : (False,True,True,False),
-    "VE" : (False,False,True,True),
-    "LH" : (False,True,False,True),
-    "LV" : (True,False,True,False)
+    "FC" : (True,False,False,False,1),
+    "FD" : (False,True,False,False,1),
+    "FB" : (False,False,True,False,1),
+    "FE" : (False,False,False,True,1),
+    "BC" : (True,True,False,True,3),
+    "BD" : (True,True,True,False,3),
+    "BB" : (False,True,True,True,3),
+    "BE" : (True,False,True,True,3),
+    "VC" : (True,False,False,True,2),
+    "VD" : (True,True,False,False,2),
+    "VB" : (False,True,True,False,2),
+    "VE" : (False,False,True,True,2),
+    "LH" : (False,True,False,True,2),
+    "LV" : (True,False,True,False,2)
 }
 
 actions = {
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     board.print()
     problem = PipeMania(board)
-    print(board.number_piece_connections(1,0))
+    print(board.number_piece_connections(0,1))
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
     # Imprimir para o standard output no formato indicado.
