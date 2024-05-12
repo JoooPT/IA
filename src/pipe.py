@@ -20,7 +20,7 @@ from search import (
 
 pieces = ["FC", "FB", "FE", "FD", "BC", "BB", "BE", "BD", "VC", "VB", "VE", "VD", "LH", "LV"]
 
-connections = {      # (up, right, down, left)
+connections = {      # (up, right, down, left, max connections)
     "FC" : (True,False,False,False,1),
     "FD" : (False,True,False,False,1),
     "FB" : (False,False,True,False,1),
@@ -53,8 +53,8 @@ actions = {
     "VE": ("VC", "VB", "VD"),
     "VD": ("VB", "VE", "VC"),
 
-    "LH": ("LV"),
-    "LV": ("LH")
+    "LH": ("LV",),
+    "LV": ("LH",)
 }
 
 class PipeManiaState:
@@ -176,7 +176,16 @@ class PipeMania(Problem):
             for col in range(size):
                 curr_piece = state.board.get_value(row, col)
                 for piece in actions.get(curr_piece):
-                    res.append((row, col, piece))
+                    if row == 0 and connections.get(piece)[0]:
+                        continue
+                    elif row == (size-1) and connections.get(piece)[2]:
+                        continue
+                    elif col == 0 and connections.get(piece)[3]:
+                        continue
+                    elif col == (size-1) and connections.get(piece)[1]:
+                        continue
+                    else:
+                        res.append((row, col, piece))
         return res
 
         
@@ -210,6 +219,7 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     board.print()
     problem = PipeMania(board)
+    print(problem.actions(problem.state))
     print(board.number_piece_connections(0,1))
     # Usar uma técnica de procura para resolver a instância,
     # Retirar a solução a partir do nó resultante,
