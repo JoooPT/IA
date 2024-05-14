@@ -60,15 +60,34 @@ actions = {
 class PipeManiaState:
     state_id = 0
 
-    def __init__(self, board):
+    def __init__(self, board, connections):
         self.board = board
         self.id = PipeManiaState.state_id
         PipeManiaState.state_id += 1
+        self.connections = connections
 
     def __lt__(self, other):
         return self.id < other.id
 
     # TODO: outros metodos da classe
+
+    def set_connections(self, connections):
+        self.connections = connections
+
+    def get_connections(self):
+        return self.connections
+
+    def deep_copy(self):
+        newBoard = Board()
+        size = self.board.__len__()
+        for row in range(size):
+            line = []
+            for col in range(size):
+                line.append(self.board.get_value(row,col))
+            newBoard.add_line(line)
+        return PipeManiaState(newBoard,self.get_connections())
+
+
 
 
 class Board:
@@ -127,19 +146,19 @@ class Board:
 
     def number_piece_connections(self, row:int, col:int):
         piece = self.matrix[row][col]
-        number_connections = 0
+        numberConnections = 0
         vertical = self.adjacent_vertical_values(row,col)
         horizontal = self.adjacent_horizontal_values(row,col)
         pieceCon = connections.get(piece)
         if vertical[0] and pieceCon[0] and connections.get(vertical[0])[2]:
-            number_connections += 1
+            numberConnections += 1
         if vertical[1] and pieceCon[2] and connections.get(vertical[1])[0]:
-            number_connections += 1 
+            numberConnections += 1 
         if horizontal[0] and pieceCon[3] and connections.get(horizontal[0])[1]:
-            number_connections += 1 
+            numberConnections += 1 
         if horizontal[1] and pieceCon[1] and connections.get(horizontal[1])[3]:
-            number_connections += 1
-        return number_connections
+            numberConnections += 1
+        return numberConnections
      
     @staticmethod
     def parse_instance():
@@ -164,8 +183,22 @@ class Board:
 class PipeMania(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        self.state = PipeManiaState(board)
+        (max, curr) = self.get_connections(board)
+        self.maxConnections = max
+        self.initial = PipeManiaState(board,curr)
+        
 
+
+    def get_connections(self,board: Board):
+        size = board.__len__()
+        max = 0
+        curr = 0
+        for row in range(size):
+            for col in range(size):
+                max += connections.get(board.get_value(row,col))[4]
+                curr += board.number_piece_connections(row,col)
+        return (max, curr)
+    
 
     def actions(self, state: PipeManiaState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -186,27 +219,40 @@ class PipeMania(Problem):
                         continue
                     else:
                         res.append((row, col, piece))
-        return res
+        return res  
 
-        
 
     def result(self, state: PipeManiaState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        state.board.set_value(action[0], action[1], action[2])
-        return state
+        #Deep copy State and apply action
+        print(action)
+        newState = state.deep_copy()
+        newState.board.set_value(action[0], action[1], action[2])
+        #Verify if current connections change and update them on newState
+        oldPieceCon = state.board.number_piece_connections(action[0], action[1])
+        newPieceCon = newState.board.number_piece_connections(action[0], action[1])
+        diff = (newPieceCon - oldPieceCon) * 2
+        if diff != 0:
+            update = newState.get_connections() + diff
+            newState.set_connections(update)
+        return newState
 
     def goal_test(self, state: PipeManiaState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
-        # TODO
-        pass
-
+        # If Max Connections == Current Connection and Conexo 
+        print(state.get_connections(), self.maxConnections)
+        if state.get_connections() == self.maxConnections:
+            return True
+        return False
+    
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
+        # Max Connections - Current Connections
         # TODO
         pass
 
@@ -217,11 +263,11 @@ if __name__ == "__main__":
     # TODO:
     # Ler o ficheiro do standard input
     board = Board.parse_instance()
-    board.print()
+    #Criar uma instancia do PipeMania
     problem = PipeMania(board)
-    print(problem.actions(problem.state))
-    print(board.number_piece_connections(0,1))
-    # Usar uma técnica de procura para resolver a instância,
-    # Retirar a solução a partir do nó resultante,
+    # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
+    goal_node = breadth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
+    print("Is goal?", problem.goal_test(goal_node.state))
+    print("Solution:\n", goal_node.state.board.print())
     pass
