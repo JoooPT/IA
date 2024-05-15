@@ -142,7 +142,11 @@ class Board:
     # TODO: outros metodos da classe
 
     def print(self):
-        print(self.matrix)
+        size = self.__len__()
+        for row in range(size):
+            for col in range(size):
+                print(self.get_value(row,col),end = " ")
+            print("")
 
     def number_piece_connections(self, row:int, col:int):
         piece = self.matrix[row][col]
@@ -208,6 +212,8 @@ class PipeMania(Problem):
         for row in range(size):
             for col in range(size):
                 curr_piece = state.board.get_value(row, col)
+                if connections.get(curr_piece)[4] == state.board.number_piece_connections(row,col):
+                    continue
                 for piece in actions.get(curr_piece):
                     if row == 0 and connections.get(piece)[0]:
                         continue
@@ -228,16 +234,14 @@ class PipeMania(Problem):
         das presentes na lista obtida pela execução de
         self.actions(state)."""
         #Deep copy State and apply action
-        print(action)
         newState = state.deep_copy()
         newState.board.set_value(action[0], action[1], action[2])
         #Verify if current connections change and update them on newState
         oldPieceCon = state.board.number_piece_connections(action[0], action[1])
         newPieceCon = newState.board.number_piece_connections(action[0], action[1])
         diff = (newPieceCon - oldPieceCon) * 2
-        if diff != 0:
-            update = newState.get_connections() + diff
-            newState.set_connections(update)
+        update = newState.get_connections() + diff
+        newState.set_connections(update)
         return newState
 
     def goal_test(self, state: PipeManiaState):
@@ -245,7 +249,6 @@ class PipeMania(Problem):
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
         # If Max Connections == Current Connection and Conexo 
-        print(state.get_connections(), self.maxConnections)
         if state.get_connections() == self.maxConnections:
             return True
         return False
@@ -253,7 +256,6 @@ class PipeMania(Problem):
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
         # Max Connections - Current Connections
-        # TODO
         pass
 
     # TODO: outros metodos da classe
@@ -269,5 +271,4 @@ if __name__ == "__main__":
     goal_node = breadth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
     print("Is goal?", problem.goal_test(goal_node.state))
-    print("Solution:\n", goal_node.state.board.print())
-    pass
+    print("Solution:\n", goal_node.state.board.print(), sep="")
