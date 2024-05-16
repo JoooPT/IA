@@ -38,33 +38,34 @@ connections = {      # (up, right, down, left, max connections)
 }
 
 actions = {
-    "FC": ("FB", "FE", "FD"),
-    "FB": ("FC", "FE", "FD"),
-    "FE": ("FC", "FB", "FD"),
-    "FD": ("FB", "FE", "FC"),
+    "FC": ("FB", "FE", "FD", "FC"),
+    "FB": ("FC", "FE", "FD", "FB"),
+    "FE": ("FC", "FB", "FD", "FE"),
+    "FD": ("FB", "FE", "FC", "FD"),
     
-    "BC": ("BB", "BE", "BD"),
-    "BB": ("BC", "BE", "BD"),
-    "BE": ("BC", "BB", "BD"),
-    "BD": ("BB", "BE", "BC"),
+    "BC": ("BB", "BE", "BD", "BC"),
+    "BB": ("BC", "BE", "BD", "BB"),
+    "BE": ("BC", "BB", "BD", "BE"),
+    "BD": ("BB", "BE", "BC", "BD"),
 
-    "VC": ("VB", "VE", "VD"),
-    "VB": ("VC", "VE", "VD"),
-    "VE": ("VC", "VB", "VD"),
-    "VD": ("VB", "VE", "VC"),
+    "VC": ("VB", "VE", "VD", "VC"),
+    "VB": ("VC", "VE", "VD", "VB"),
+    "VE": ("VC", "VB", "VD", "VE"),
+    "VD": ("VB", "VE", "VC", "VD"),
 
-    "LH": ("LV",),
-    "LV": ("LH",)
+    "LH": ("LV", "LH"),
+    "LV": ("LH", "LV")
 }
 
 class PipeManiaState:
     state_id = 0
 
-    def __init__(self, board, connections):
+    def __init__(self, board, connections, row, col):
         self.board = board
         self.id = PipeManiaState.state_id
         PipeManiaState.state_id += 1
         self.connections = connections
+        self.curr_coords = [row, col]
 
     def __lt__(self, other):
         return self.id < other.id
@@ -76,6 +77,16 @@ class PipeManiaState:
 
     def get_connections(self):
         return self.connections
+    
+    def get_curr_coords(self):
+        return self.curr_coords
+
+    def next_piece(self):
+        if self.curr_coords[1] == self.board.__len__() - 1:
+            self.curr_coords[0] += 1
+            self.curr_coords[1] = 0
+        else:
+            self.curr_coords[1] += 1
 
     def deep_copy(self):
         newBoard = Board()
@@ -85,7 +96,7 @@ class PipeManiaState:
             for col in range(size):
                 line.append(self.board.get_value(row,col))
             newBoard.add_line(line)
-        return PipeManiaState(newBoard,self.get_connections())
+        return PipeManiaState(newBoard,self.get_connections(), self.get_curr_coords()[0], self.get_curr_coords()[1])
 
 
 
@@ -189,7 +200,7 @@ class PipeMania(Problem):
         """O construtor especifica o estado inicial."""
         (max, curr) = self.get_connections(board)
         self.maxConnections = max
-        self.initial = PipeManiaState(board,curr)
+        self.initial = PipeManiaState(board, curr, 0, 0)
         
 
 
@@ -209,22 +220,29 @@ class PipeMania(Problem):
         partir do estado passado como argumento."""
         res = []
         size = state.board.__len__()
-        for row in range(size):
-            for col in range(size):
-                curr_piece = state.board.get_value(row, col)
-                if connections.get(curr_piece)[4] == state.board.number_piece_connections(row,col):
-                    continue
-                for piece in actions.get(curr_piece):
-                    if row == 0 and connections.get(piece)[0]:
-                        continue
-                    elif row == (size-1) and connections.get(piece)[2]:
-                        continue
-                    elif col == 0 and connections.get(piece)[3]:
-                        continue
-                    elif col == (size-1) and connections.get(piece)[1]:
-                        continue
-                    else:
-                        res.append((row, col, piece))
+        
+        curr_coords = state.get_curr_coords()
+        row = curr_coords[0]
+        col = curr_coords[1]
+
+        if row >= size:
+            return []
+
+        curr_piece = state.board.get_value(row, col)
+
+        for piece in actions.get(curr_piece):
+            if row == 0 and connections.get(piece)[0]:
+                continue
+            elif row == (size-1) and connections.get(piece)[2]:
+                continue
+            elif col == 0 and connections.get(piece)[3]:
+                continue
+            elif col == (size-1) and connections.get(piece)[1]:
+                continue
+            else:
+                res.append((row, col, piece))
+        print("peça para mudar:", curr_piece)
+        print(res)
         return res  
 
 
@@ -242,6 +260,9 @@ class PipeMania(Problem):
         diff = (newPieceCon - oldPieceCon) * 2
         update = newState.get_connections() + diff
         newState.set_connections(update)
+        newState.next_piece()
+        newState.board.print()
+        print("")
         return newState
 
     def goal_test(self, state: PipeManiaState):
@@ -268,7 +289,7 @@ if __name__ == "__main__":
     #Criar uma instancia do PipeMania
     problem = PipeMania(board)
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
-    goal_node = breadth_first_tree_search(problem)
+    goal_node = depth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n", goal_node.state.board.print(), sep="")
