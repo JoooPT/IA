@@ -241,7 +241,7 @@ class PipeMania(Problem):
                 continue
             else:
                 res.append((row, col, piece))
-        print("peça para mudar:", curr_piece)
+        #print("peça para mudar:", curr_piece)
         print(res)
         return res  
 
@@ -261,8 +261,9 @@ class PipeMania(Problem):
         update = newState.get_connections() + diff
         newState.set_connections(update)
         newState.next_piece()
-        newState.board.print()
-        print("")
+        print(newState.id)
+        #newState.board.print()
+        #print("")
         return newState
 
     def goal_test(self, state: PipeManiaState):
@@ -277,7 +278,7 @@ class PipeMania(Problem):
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
         # Max Connections - Current Connections
-        pass
+        return self.maxConnections - node.state.get_connections()
 
     # TODO: outros metodos da classe
 
@@ -289,7 +290,8 @@ if __name__ == "__main__":
     #Criar uma instancia do PipeMania
     problem = PipeMania(board)
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
-    goal_node = depth_first_tree_search(problem)
+    goal_node = breadth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
     print("Is goal?", problem.goal_test(goal_node.state))
-    print("Solution:\n", goal_node.state.board.print(), sep="")
+    print("Solution:\n")
+    board.print()
