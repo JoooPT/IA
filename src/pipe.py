@@ -66,11 +66,27 @@ class PipeManiaState:
         PipeManiaState.state_id += 1
         self.connections = connections
         self.curr_coords = [row, col]
+        self.path = self.path_init()
 
     def __lt__(self, other):
         return self.id < other.id
 
     # TODO: outros metodos da classe
+
+    def path_init(self):
+        matrix = []
+        for row in range(self.board.__len__()):
+            line = []
+            for col in range(self.board.__len__()):
+                line.append(False)
+            matrix.append(line)
+        return matrix
+
+    def on_path(self, row, col):
+        return self.path[row][col]
+    
+    def add_to_path(self, row, col):
+        self.path[row][col] = True
 
     def set_connections(self, connections):
         self.connections = connections
