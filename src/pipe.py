@@ -244,28 +244,89 @@ class PipeMania(Problem):
             possiblePieces.append(line)
         return (max, curr,possiblePieces)
 
+    def revise(self, row, col):
+        size = self.initial.board.__len__()
+        revised = False
+        for piece in self.possiblePieces[row][col]:
+            connect = connections.get(piece)
+            
+            if row == 0 and connect[0]:
+                self.possiblePieces[row][col].remove(piece)
+                revised = True
+                continue
+            if connect[0]:
+                remove = True
+                for adjPiece in self.possiblePieces[row-1][col]:
+                    if connections.get(adjPiece)[2]:
+                        remove = False
+                if remove:
+                    self.possiblePieces[row][col].remove(piece)
+                    revised = True
+                    continue
+
+            if row == (size-1) and connect[2]:
+                self.possiblePieces[row][col].remove(piece)
+                revised = True
+                continue
+            if connect[2]:
+                remove = True
+                for adjPiece in self.possiblePieces[row+1][col]:
+                    if connections.get(adjPiece)[0]:
+                        remove = False
+                if remove:
+                    self.possiblePieces[row][col].remove(piece)
+                    revised = True
+                    continue
+            
+            if col == 0 and connect[3]:
+                print(piece, row, col)
+                self.possiblePieces[row][col].remove(piece)
+                revised = True
+                continue
+            if connect[3]:
+                remove = True
+                for adjPiece in self.possiblePieces[row][col-1]:
+                    if connections.get(adjPiece)[1]:
+                        remove = False
+                if remove:
+                    self.possiblePieces[row][col].remove(piece)
+                    revised = True
+                    continue
+            
+            if col == (size-1) and connect[1]:
+                self.possiblePieces[row][col].remove(piece)
+                revised = True
+                continue
+            if connect[1]:
+                remove = True
+                for adjPiece in self.possiblePieces[row][col+1]:
+                    if connections.get(adjPiece)[3]:
+                        remove = False
+                if remove:
+                    self.possiblePieces[row][col].remove(piece)
+                    revised = True
+                    continue
+
+        return revised
+
     def pre_processing(self):
         queue = []
-        size = self.board.__len__()
+        size = self.initial.board.__len__()
         for row in range(size - 1):
             for col in range(size - 1):
                 queue.append((row,col))
         while queue.__len__() != 0:
             (row,col) = queue.pop(0)
-            for piece in self.possiblePieces[row][col]:
-                connect = connections.get(piece)
-                if row == 0 and connect[0]:
-                    self.possiblePieces[row][col].remove(piece)
-                elif row == (size-1) and connect[2]:
-                    continue
-                elif col == 0 and connect[3]:
-                    continue
-                elif col == (size-1) and connect[1]:
-                    continue
-                else:
-                    res.append((row, col, piece))
-
-
+            if self.revise(row, col):
+                if row != 0:
+                    queue.append((row-1, col))
+                if row != size-1:
+                    queue.append((row+1, col))
+                if col != 0:
+                    queue.append((row, col-1))
+                if col != size-1:
+                    queue.append((row, col+1))
+        
     def actions(self, state: PipeManiaState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
@@ -351,6 +412,8 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     #Criar uma instancia do PipeMania
     problem = PipeMania(board)
+    print(problem.possiblePieces)
+    problem.pre_processing()
     print(problem.possiblePieces)
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
     #goal_node = depth_first_tree_search(problem)
