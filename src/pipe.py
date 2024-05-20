@@ -279,7 +279,6 @@ class PipeMania(Problem):
                     continue
             
             if col == 0 and connect[3]:
-                print(piece, row, col)
                 self.possiblePieces[row][col].remove(piece)
                 revised = True
                 continue
@@ -312,12 +311,14 @@ class PipeMania(Problem):
     def pre_processing(self):
         queue = []
         size = self.initial.board.__len__()
-        for row in range(size - 1):
-            for col in range(size - 1):
+        for row in range(size):
+            for col in range(size):
                 queue.append((row,col))
         while queue.__len__() != 0:
+            print(queue)
             (row,col) = queue.pop(0)
             if self.revise(row, col):
+                print("revised", row, col)
                 if row != 0:
                     queue.append((row-1, col))
                 if row != size-1:
