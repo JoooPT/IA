@@ -60,27 +60,18 @@ actions = {
 class PipeManiaState:
     state_id = 0
 
-    def __init__(self, board, connections, row, col):
+    def __init__(self, board, path, pieces, connections):
         self.board = board
         self.id = PipeManiaState.state_id
         PipeManiaState.state_id += 1
+        self.path = path
+        self.pieces = pieces
         self.connections = connections
-        self.curr_coords = [row, col]
-        self.path = self.path_init()
 
     def __lt__(self, other):
         return self.id < other.id
 
     # TODO: outros metodos da classe
-
-    def path_init(self):
-        matrix = []
-        for row in range(self.board.__len__()):
-            line = []
-            for col in range(self.board.__len__()):
-                line.append(False)
-            matrix.append(line)
-        return matrix
 
     def on_path(self, row, col):
         return self.path[row][col]
@@ -94,25 +85,36 @@ class PipeManiaState:
     def get_connections(self):
         return self.connections
     
-    def get_curr_coords(self):
-        return self.curr_coords
-
-    def next_piece(self):
-        if self.curr_coords[1] == self.board.__len__() - 1:
-            self.curr_coords[0] += 1
-            self.curr_coords[1] = 0
-        else:
-            self.curr_coords[1] += 1
+    def get_next_pieces(self, row, col):
+        res = []
+        size = self.board.__len__()
+        piece = self.board.get_value(row,col)
+        connect = connections.get(piece)
+        #(Row, Col, Ligacao obrigatoria)
+        if row > 0 and connect[0] and not self.on_path(row - 1,col):
+            res.append((row - 1, col,2)) 
+        if col < size-1 and connect[1] and not self.on_path(row,col + 1):
+            res.append((row, col + 1,3))
+        if row < size-1 and connect[2] and not self.on_path(row + 1,col):
+            res.append((row + 1, col,0))
+        if col > 0 and connect[3] and not self.on_path(row,col - 1):
+            res.append((row, col - 1,1))
+        return res
 
     def deep_copy(self):
+        newPieces = self.pieces.copy()
         newBoard = Board()
+        newPath = []
         size = self.board.__len__()
         for row in range(size):
             line = []
+            line_path = []
             for col in range(size):
                 line.append(self.board.get_value(row,col))
+                line_path.append(self.on_path(row,col))
+            newPath.append(line_path)
             newBoard.add_line(line)
-        return PipeManiaState(newBoard,self.get_connections(), self.get_curr_coords()[0], self.get_curr_coords()[1])
+        return PipeManiaState(newBoard,newPath, newPieces, self.get_connections())
 
 
 
@@ -216,9 +218,17 @@ class PipeMania(Problem):
         """O construtor especifica o estado inicial."""
         (max, curr) = self.get_connections(board)
         self.maxConnections = max
-        self.initial = PipeManiaState(board, curr, 0, 0)
+        path = self.path_init(board)
+        self.initial = PipeManiaState(board, path, [(0,0,4)], curr)
         
-
+    def path_init(self,board):
+        matrix = []
+        for row in range(board.__len__()):
+            line = []
+            for col in range(board.__len__()):
+                line.append(False)
+            matrix.append(line)
+        return matrix
 
     def get_connections(self,board: Board):
         size = board.__len__()
@@ -237,28 +247,37 @@ class PipeMania(Problem):
         res = []
         size = state.board.__len__()
         
-        curr_coords = state.get_curr_coords()
-        row = curr_coords[0]
-        col = curr_coords[1]
+        if state.pieces.__len__() == 0:
+            return res
 
-        if row >= size:
-            return []
+        (row,col,direction) = state.pieces.pop()
 
         curr_piece = state.board.get_value(row, col)
 
+
         for piece in actions.get(curr_piece):
-            if row == 0 and connections.get(piece)[0]:
+            connect = connections.get(piece)
+            if row == 0 and connect[0]:
                 continue
-            elif row == (size-1) and connections.get(piece)[2]:
+            elif row == (size-1) and connect[2]:
                 continue
-            elif col == 0 and connections.get(piece)[3]:
+            elif col == 0 and connect[3]:
                 continue
-            elif col == (size-1) and connections.get(piece)[1]:
+            elif col == (size-1) and connect[1]:
+                continue
+            elif direction != 4 and not connect[direction]:
+                continue
+            elif connect[0] and state.on_path(row-1,col) and not connections.get(state.board.get_value(row-1,col))[2]:
+                continue
+            elif connect[1] and state.on_path(row,col+1) and not connections.get(state.board.get_value(row,col+1))[3]:
+                continue
+            elif connect[2] and state.on_path(row+1,col) and not connections.get(state.board.get_value(row+1,col))[0]:
+                continue
+            elif connect[3] and state.on_path(row,col-1) and not connections.get(state.board.get_value(row,col-1))[1]:
                 continue
             else:
                 res.append((row, col, piece))
-        #print("peça para mudar:", curr_piece)
-        print(res)
+        print("actions:", res)
         return res  
 
 
@@ -270,16 +289,18 @@ class PipeMania(Problem):
         #Deep copy State and apply action
         newState = state.deep_copy()
         newState.board.set_value(action[0], action[1], action[2])
+        newState.add_to_path(action[0],action[1])
+        #Add next valid pieces to action
+        newState.pieces.extend(newState.get_next_pieces(action[0],action[1]))
+        print("action chosen:" , action)
+        print("valid options:", newState.pieces)
         #Verify if current connections change and update them on newState
         oldPieceCon = state.board.number_piece_connections(action[0], action[1])
         newPieceCon = newState.board.number_piece_connections(action[0], action[1])
         diff = (newPieceCon - oldPieceCon) * 2
         update = newState.get_connections() + diff
         newState.set_connections(update)
-        newState.next_piece()
         print(newState.id)
-        #newState.board.print()
-        #print("")
         return newState
 
     def goal_test(self, state: PipeManiaState):
@@ -306,8 +327,8 @@ if __name__ == "__main__":
     #Criar uma instancia do PipeMania
     problem = PipeMania(board)
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
-    goal_node = breadth_first_tree_search(problem)
+    goal_node = depth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
     print("Is goal?", problem.goal_test(goal_node.state))
     print("Solution:\n")
-    board.print()
+    goal_node.state.board.print()
