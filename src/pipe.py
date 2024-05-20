@@ -216,8 +216,7 @@ class Board:
 class PipeMania(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        (max, curr) = self.get_connections(board)
-        self.maxConnections = max
+        (self.maxConnections, curr,self.possiblePieces) = self.get_connections(board)
         path = self.path_init(board)
         self.initial = PipeManiaState(board, path, [(0,0,4)], curr)
         
@@ -234,12 +233,38 @@ class PipeMania(Problem):
         size = board.__len__()
         max = 0
         curr = 0
+        possiblePieces = []
         for row in range(size):
+            line = []
             for col in range(size):
                 max += connections.get(board.get_value(row,col))[4]
                 curr += board.number_piece_connections(row,col)
-        return (max, curr)
-    
+                piece = board.get_value(row,col)
+                line.append([x for x in actions.get(piece)])
+            possiblePieces.append(line)
+        return (max, curr,possiblePieces)
+
+    def pre_processing(self):
+        queue = []
+        size = self.board.__len__()
+        for row in range(size - 1):
+            for col in range(size - 1):
+                queue.append((row,col))
+        while queue.__len__() != 0:
+            (row,col) = queue.pop(0)
+            for piece in self.possiblePieces[row][col]:
+                connect = connections.get(piece)
+                if row == 0 and connect[0]:
+                    self.possiblePieces[row][col].remove(piece)
+                elif row == (size-1) and connect[2]:
+                    continue
+                elif col == 0 and connect[3]:
+                    continue
+                elif col == (size-1) and connect[1]:
+                    continue
+                else:
+                    res.append((row, col, piece))
+
 
     def actions(self, state: PipeManiaState):
         """Retorna uma lista de ações que podem ser executadas a
@@ -326,9 +351,10 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     #Criar uma instancia do PipeMania
     problem = PipeMania(board)
+    print(problem.possiblePieces)
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
-    goal_node = depth_first_tree_search(problem)
+    #goal_node = depth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
-    print("Is goal?", problem.goal_test(goal_node.state))
-    print("Solution:\n")
-    goal_node.state.board.print()
+    # print("Is goal?", problem.goal_test(goal_node.state))
+    # print("Solution:\n")
+    # goal_node.state.board.print()
