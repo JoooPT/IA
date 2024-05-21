@@ -60,24 +60,18 @@ actions = {
 class PipeManiaState:
     state_id = 0
 
-    def __init__(self, board, path, pieces, connections):
+    def __init__(self, board, row, col, connections, possiblePieces):
         self.board = board
         self.id = PipeManiaState.state_id
         PipeManiaState.state_id += 1
-        self.path = path
-        self.pieces = pieces
         self.connections = connections
+        self.curr_coords = [row, col]
+        self.possiblePieces = possiblePieces
 
     def __lt__(self, other):
         return self.id < other.id
 
     # TODO: outros metodos da classe
-
-    def on_path(self, row, col):
-        return self.path[row][col]
-    
-    def add_to_path(self, row, col):
-        self.path[row][col] = True
 
     def set_connections(self, connections):
         self.connections = connections
@@ -85,36 +79,99 @@ class PipeManiaState:
     def get_connections(self):
         return self.connections
     
-    def get_next_pieces(self, row, col):
-        res = []
+    def get_curr_coords(self):
+        return self.curr_coords
+
+    def next_piece(self):
+        if self.curr_coords[1] == self.board.__len__() - 1:
+            self.curr_coords[0] += 1
+            self.curr_coords[1] = 0
+        else:
+            self.curr_coords[1] += 1
+    
+    def pre_processing(self):
         size = self.board.__len__()
-        piece = self.board.get_value(row,col)
-        connect = connections.get(piece)
-        #(Row, Col, Ligacao obrigatoria)
-        if row > 0 and connect[0] and not self.on_path(row - 1,col):
-            res.append((row - 1, col,2)) 
-        if col < size-1 and connect[1] and not self.on_path(row,col + 1):
-            res.append((row, col + 1,3))
-        if row < size-1 and connect[2] and not self.on_path(row + 1,col):
-            res.append((row + 1, col,0))
-        if col > 0 and connect[3] and not self.on_path(row,col - 1):
-            res.append((row, col - 1,1))
-        return res
+        change = True
+        while(change):
+            change = False
+            for row in range(size):
+                for col in range(size):
+                    if self.possiblePieces[row][col].__len__() == 1:
+                        continue
+                    for piece in self.possiblePieces[row][col]:
+                        connect = connections.get(piece)
+                        if row == 0 and connect[0]:
+                            self.possiblePieces[row][col].remove(piece)
+                            change = True
+                            continue
+                        elif row == (size-1) and connect[2]:
+                            self.possiblePieces[row][col].remove(piece)
+                            change = True
+                            continue
+                        elif col == 0 and connect[3]:
+                            self.possiblePieces[row][col].remove(piece)
+                            change = True
+                            continue
+                        elif col == (size-1) and connect[1]:
+                            self.possiblePieces[row][col].remove(piece)
+                            change = True
+                            continue
+                        
+                        if row != 0:
+                            remove = True
+                            for adjPiece in self.possiblePieces[row-1][col]:
+                                if connect[0] == connections.get(adjPiece)[2]:
+                                    remove = False
+                            if remove:
+                                self.possiblePieces[row][col].remove(piece)
+                                change = True
+                                continue
+
+                        if row != size-1:
+                            remove = True
+                            for adjPiece in self.possiblePieces[row+1][col]:
+                                if connect[2] == connections.get(adjPiece)[0]:
+                                    remove = False
+                            if remove:
+                                self.possiblePieces[row][col].remove(piece)
+                                change = True
+                                continue
+
+                        if col != 0:
+                            remove = True
+                            for adjPiece in self.possiblePieces[row][col-1]:
+                                if connect[3] == connections.get(adjPiece)[1]:
+                                    remove = False
+                            if remove:
+                                self.possiblePieces[row][col].remove(piece)
+                                change = True
+                                continue
+
+                        if col != size-1:
+                            remove = True
+                            for adjPiece in self.possiblePieces[row][col+1]:
+                                if connect[1] == connections.get(adjPiece)[3]:
+                                    remove = False
+                            if remove:
+                                self.possiblePieces[row][col].remove(piece)
+                                change = True
+                                continue
+        return
 
     def deep_copy(self):
-        newPieces = self.pieces.copy()
         newBoard = Board()
-        newPath = []
+        newPossiblePieces = []
         size = self.board.__len__()
         for row in range(size):
             line = []
-            line_path = []
+            possibleLine = []
             for col in range(size):
                 line.append(self.board.get_value(row,col))
-                line_path.append(self.on_path(row,col))
-            newPath.append(line_path)
+                possibleLine.append(self.possiblePieces[row][col].copy())
             newBoard.add_line(line)
-        return PipeManiaState(newBoard,newPath, newPieces, self.get_connections())
+            newPossiblePieces.append(possibleLine)
+        currCords = self.get_curr_coords()
+        return PipeManiaState(newBoard,currCords[0],currCords[1], self.get_connections(), newPossiblePieces)
 
 
 
@@ -216,18 +273,8 @@ class Board:
 class PipeMania(Problem):
     def __init__(self, board: Board):
         """O construtor especifica o estado inicial."""
-        (self.maxConnections, curr,self.possiblePieces) = self.get_connections(board)
-        path = self.path_init(board)
-        self.initial = PipeManiaState(board, path, [(0,0,4)], curr)
-        
-    def path_init(self,board):
-        matrix = []
-        for row in range(board.__len__()):
-            line = []
-            for col in range(board.__len__()):
-                line.append(False)
-            matrix.append(line)
-        return matrix
+        (self.maxConnections, curr,possiblePieces) = self.get_connections(board)
+        self.initial = PipeManiaState(board, 0, 0, curr,possiblePieces)
 
     def get_connections(self,board: Board):
         size = board.__len__()
@@ -243,102 +290,23 @@ class PipeMania(Problem):
                 line.append([x for x in actions.get(piece)])
             possiblePieces.append(line)
         return (max, curr,possiblePieces)
-
-    def pre_processing(self):
-        size = self.initial.board.__len__()
-        change = True
-        while(change):
-            change = False
-            for row in range(size):
-                for col in range(size):
-                    if self.possiblePieces[row][col].__len__() == 1:
-                        continue
-                    for piece in self.possiblePieces[row][col]:
-                        connect = connections.get(piece)
-                        if row == 0 and connect[0]:
-                            self.possiblePieces[row][col].remove(piece)
-                            change = True
-                            continue
-                        elif row == (size-1) and connect[2]:
-                            self.possiblePieces[row][col].remove(piece)
-                            change = True
-                            continue
-                        elif col == 0 and connect[3]:
-                            self.possiblePieces[row][col].remove(piece)
-                            change = True
-                            continue
-                        elif col == (size-1) and connect[1]:
-                            self.possiblePieces[row][col].remove(piece)
-                            change = True
-                            continue
-                        
-                        if row != 0:
-                            remove = True
-                            for adjPiece in self.possiblePieces[row-1][col]:
-                                if connect[0] == connections.get(adjPiece)[2]:
-                                    remove = False
-                            if remove:
-                                self.possiblePieces[row][col].remove(piece)
-                                change = True
-                                continue
-
-                        if row != size-1:
-                            remove = True
-                            for adjPiece in self.possiblePieces[row+1][col]:
-                                if connect[2] == connections.get(adjPiece)[0]:
-                                    remove = False
-                            if remove:
-                                self.possiblePieces[row][col].remove(piece)
-                                change = True
-                                continue
-
-                        if col != 0:
-                            remove = True
-                            for adjPiece in self.possiblePieces[row][col-1]:
-                                if connect[3] == connections.get(adjPiece)[1]:
-                                    remove = False
-                            if remove:
-                                self.possiblePieces[row][col].remove(piece)
-                                change = True
-                                continue
-
-                        if col != size-1:
-                            remove = True
-                            for adjPiece in self.possiblePieces[row][col+1]:
-                                if connect[1] == connections.get(adjPiece)[3]:
-                                    remove = False
-                            if remove:
-                                self.possiblePieces[row][col].remove(piece)
-                                change = True
-                                continue
-        return
-                        
-
+                    
         
     def actions(self, state: PipeManiaState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
         res = []
-        
-        if state.pieces.__len__() == 0:
-            return res
+        size = state.board.__len__()
 
-        (row,col,direction) = state.pieces.pop()
+        curr_coords = state.get_curr_coords()
+        row = curr_coords[0]
+        col = curr_coords[1]
 
-        for piece in self.possiblePieces[row][col]:
-            connect = connections.get(piece)
-            if direction != 4 and not connect[direction]:
-                continue
-            elif connect[0] and state.on_path(row-1,col) and not connections.get(state.board.get_value(row-1,col))[2]:
-                continue
-            elif connect[1] and state.on_path(row,col+1) and not connections.get(state.board.get_value(row,col+1))[3]:
-                continue
-            elif connect[2] and state.on_path(row+1,col) and not connections.get(state.board.get_value(row+1,col))[0]:
-                continue
-            elif connect[3] and state.on_path(row,col-1) and not connections.get(state.board.get_value(row,col-1))[1]:
-                continue
-            else:
-                res.append((row, col, piece))
+        if row >= size:
+            return []
+
+        for piece in state.possiblePieces[row][col]:
+            res.append((row, col, piece))
         return res  
 
 
@@ -350,15 +318,16 @@ class PipeMania(Problem):
         #Deep copy State and apply action
         newState = state.deep_copy()
         newState.board.set_value(action[0], action[1], action[2])
-        newState.add_to_path(action[0],action[1])
         #Add next valid pieces to action
-        newState.pieces.extend(newState.get_next_pieces(action[0],action[1]))
         #Verify if current connections change and update them on newState
         oldPieceCon = state.board.number_piece_connections(action[0], action[1])
         newPieceCon = newState.board.number_piece_connections(action[0], action[1])
         diff = (newPieceCon - oldPieceCon) * 2
         update = newState.get_connections() + diff
         newState.set_connections(update)
+        newState.possiblePieces[action[0]][action[1]] = [action[2]]
+        newState.pre_processing()
+        newState.next_piece()
         return newState
 
     def goal_test(self, state: PipeManiaState):
@@ -384,7 +353,7 @@ if __name__ == "__main__":
     board = Board.parse_instance()
     #Criar uma instancia do PipeMania
     problem = PipeMania(board)
-    problem.pre_processing()
+    problem.initial.pre_processing()
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
     goal_node = depth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
