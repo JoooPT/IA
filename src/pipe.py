@@ -246,9 +246,8 @@ class PipeMania(Problem):
 
     def revise(self, row, col, direction):
         size = self.initial.board.__len__()
-        revised = False
         for piece in self.possiblePieces[row][col]:
-            
+            revised = False
             connect = connections.get(piece)
             
             if row == 0 and connect[0]:
