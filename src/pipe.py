@@ -244,68 +244,73 @@ class PipeMania(Problem):
             possiblePieces.append(line)
         return (max, curr,possiblePieces)
 
-    def revise(self, row, col):
+    def revise(self, row, col, direction):
         size = self.initial.board.__len__()
         revised = False
         for piece in self.possiblePieces[row][col]:
+            
             connect = connections.get(piece)
             
             if row == 0 and connect[0]:
                 self.possiblePieces[row][col].remove(piece)
                 revised = True
                 continue
-            if connect[0]:
-                remove = True
-                for adjPiece in self.possiblePieces[row-1][col]:
-                    if connections.get(adjPiece)[2]:
-                        remove = False
-                if remove:
-                    self.possiblePieces[row][col].remove(piece)
-                    revised = True
-                    continue
 
             if row == (size-1) and connect[2]:
                 self.possiblePieces[row][col].remove(piece)
                 revised = True
                 continue
-            if connect[2]:
-                remove = True
-                for adjPiece in self.possiblePieces[row+1][col]:
-                    if connections.get(adjPiece)[0]:
-                        remove = False
-                if remove:
-                    self.possiblePieces[row][col].remove(piece)
-                    revised = True
-                    continue
             
             if col == 0 and connect[3]:
                 self.possiblePieces[row][col].remove(piece)
                 revised = True
                 continue
-            if connect[3]:
+            
+            if col == (size-1) and connect[1]:
+                self.possiblePieces[row][col].remove(piece)
+                revised = True
+                continue
+            
+            if row != 0 and (direction == 0 or direction == 4):
                 remove = True
-                for adjPiece in self.possiblePieces[row][col-1]:
-                    if connections.get(adjPiece)[1]:
+                for adjPiece in self.possiblePieces[row-1][col]:
+                    if connect[0] == connections.get(adjPiece)[2]:
                         remove = False
                 if remove:
                     self.possiblePieces[row][col].remove(piece)
                     revised = True
                     continue
             
-            if col == (size-1) and connect[1]:
-                self.possiblePieces[row][col].remove(piece)
-                revised = True
-                continue
-            if connect[1]:
+            if row != size-1 and (direction == 2 or direction == 4): 
                 remove = True
-                for adjPiece in self.possiblePieces[row][col+1]:
-                    if connections.get(adjPiece)[3]:
+                for adjPiece in self.possiblePieces[row+1][col]:
+                    if connect[2] == connections.get(adjPiece)[0]:
                         remove = False
                 if remove:
                     self.possiblePieces[row][col].remove(piece)
                     revised = True
                     continue
-
+            
+            if col != 0 and (direction == 3 or direction == 4): 
+                remove = True
+                for adjPiece in self.possiblePieces[row][col-1]:
+                    if connect[3] == connections.get(adjPiece)[1]:
+                        remove = False
+                if remove:
+                    self.possiblePieces[row][col].remove(piece)
+                    revised = True
+                    continue
+            
+            if col != size - 1 and (direction == 1 or direction == 4):
+                remove = True
+                for adjPiece in self.possiblePieces[row][col+1]:
+                    if connect[1] == connections.get(adjPiece)[3]:
+                        remove = False
+                if remove:
+                    self.possiblePieces[row][col].remove(piece)
+                    revised = True
+                    continue
+        
         return revised
 
     def pre_processing(self):
@@ -313,20 +318,20 @@ class PipeMania(Problem):
         size = self.initial.board.__len__()
         for row in range(size):
             for col in range(size):
-                queue.append((row,col))
+                queue.append((row,col, 4))
         while queue.__len__() != 0:
             print(queue)
-            (row,col) = queue.pop(0)
-            if self.revise(row, col):
+            (row,col,direction) = queue.pop(0)
+            if self.revise(row, col, direction):
                 print("revised", row, col)
                 if row != 0:
-                    queue.append((row-1, col))
+                    queue.append((row-1, col, 2))
                 if row != size-1:
-                    queue.append((row+1, col))
+                    queue.append((row+1, col, 0))
                 if col != 0:
-                    queue.append((row, col-1))
+                    queue.append((row, col-1, 1))
                 if col != size-1:
-                    queue.append((row, col+1))
+                    queue.append((row, col+1, 3))
         
     def actions(self, state: PipeManiaState):
         """Retorna uma lista de ações que podem ser executadas a
