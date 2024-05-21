@@ -313,6 +313,16 @@ class PipeMania(Problem):
                                 self.possiblePieces[row][col].remove(piece)
                                 change = True
                                 continue
+        for row in range(size):
+                for col in range(size):
+                    if self.possiblePieces[row][col].__len__() == 1:
+                        piece = self.possiblePieces[row][col][0]
+                        oldPieceCon = self.initial.board.number_piece_connections(row, col)
+                        self.initial.board.set_value(row, col, piece)
+                        newPieceCon = self.initial.board.number_piece_connections(row, col)
+                        diff = (newPieceCon - oldPieceCon) * 2
+                        update = self.initial.get_connections() + diff
+                        self.initial.set_connections(update)
         return
                         
 
@@ -325,22 +335,14 @@ class PipeMania(Problem):
         if state.pieces.__len__() == 0:
             return res
 
-        (row,col,direction) = state.pieces.pop()
+        size = state.board.__len__()
 
-        for piece in self.possiblePieces[row][col]:
-            connect = connections.get(piece)
-            if direction != 4 and not connect[direction]:
-                continue
-            elif connect[0] and state.on_path(row-1,col) and not connections.get(state.board.get_value(row-1,col))[2]:
-                continue
-            elif connect[1] and state.on_path(row,col+1) and not connections.get(state.board.get_value(row,col+1))[3]:
-                continue
-            elif connect[2] and state.on_path(row+1,col) and not connections.get(state.board.get_value(row+1,col))[0]:
-                continue
-            elif connect[3] and state.on_path(row,col-1) and not connections.get(state.board.get_value(row,col-1))[1]:
-                continue
-            else:
-                res.append((row, col, piece))
+        for row in range(size):
+            for col in range(size):
+                if self.possiblePieces[row][col].__len__() != 1 and not state.on_path(row, col):
+                    for piece in self.possiblePieces[row][col]:
+                        res.append((row, col, piece))
+
         return res  
 
 
@@ -354,7 +356,6 @@ class PipeMania(Problem):
         newState.board.set_value(action[0], action[1], action[2])
         newState.add_to_path(action[0],action[1])
         #Add next valid pieces to action
-        newState.pieces.extend(newState.get_next_pieces(action[0],action[1]))
         #Verify if current connections change and update them on newState
         oldPieceCon = state.board.number_piece_connections(action[0], action[1])
         newPieceCon = newState.board.number_piece_connections(action[0], action[1])
@@ -388,6 +389,8 @@ if __name__ == "__main__":
     problem = PipeMania(board)
     problem.pre_processing()
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
+    #print(problem.possiblePieces)
+    #print(problem.initial.board.matrix)
     goal_node = depth_first_tree_search(problem)
     # Imprimir para o standard output no formato indicado.
     goal_node.state.board.print()
