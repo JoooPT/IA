@@ -158,6 +158,30 @@ class PipeManiaState:
                                 continue
         return
 
+    def no_loops(self):
+        visitedPieces = {(0,0)}
+        stack = [(0,0)]
+        while stack.__len__() != 0:
+            currPiece = stack.pop()
+            row = currPiece[0]
+            col = currPiece[1]
+            piece = self.board.get_value(row, col)
+            if connections.get(piece)[0] and (row-1, col) not in visitedPieces:
+                visitedPieces.add((row-1, col))
+                stack.append((row-1,col))
+            if connections.get(piece)[1] and (row, col+1) not in visitedPieces:
+                visitedPieces.add((row, col+1))
+                stack.append((row,col+1))
+            if connections.get(piece)[2] and (row+1, col) not in visitedPieces:
+                visitedPieces.add((row+1, col))
+                stack.append((row+1,col))
+            if connections.get(piece)[3] and (row, col-1) not in visitedPieces:
+                visitedPieces.add((row, col-1))
+                stack.append((row,col-1))
+
+        size = self.board.__len__()
+        return visitedPieces.__len__() == size*size
+
     def deep_copy(self):
         newBoard = Board()
         newPossiblePieces = []
@@ -355,7 +379,7 @@ class PipeMania(Problem):
         estão preenchidas de acordo com as regras do problema."""
         # If Max Connections == Current Connection and Conexo 
         if state.get_connections() == self.maxConnections:
-            return True
+            return state.no_loops()
         return False
     
     def h(self, node: Node):
