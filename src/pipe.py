@@ -398,6 +398,6 @@ if __name__ == "__main__":
     problem = PipeMania(board)
     problem.initial.pre_processing()
     # Usar uma técnica de procura para resolver a instância, Retirar a solução a partir do nó resultante,
-    goal_node = depth_first_tree_search(problem)
+    goal_node = astar_search(problem)
     # Imprimir para o standard output no formato indicado.
     goal_node.state.board.print()
